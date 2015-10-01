@@ -3,4 +3,4 @@
 	url = https://github.com/floodyberry/ed25519-donna.git
 [submodule "curve25519-donna"]
 	path = curve25519-donna
-	url = https://github.com/agl/curve25519-donna.git
+	url = https://github.com/floodyberry/curve25519-donna.git

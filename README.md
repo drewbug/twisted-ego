@@ -7,7 +7,7 @@
     
     ./twisted-ego
 
-    gcc curve25519-donna/curve25519-donna-c64.c -m64 -O3 -c
-    gcc -lcrypto curve25519-donna-c64.o twisted-secrets.c -o twisted-secrets
+    gcc curve25519-donna/curve25519.c -m64 -O3 -c
+    gcc -lcrypto curve25519.o twisted-secrets.c -o twisted-secrets
     
     ./twisted-secrets

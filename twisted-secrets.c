@@ -5,7 +5,7 @@
 
 #include <openssl/sha.h>
 
-extern void curve25519_donna(uint8_t *output, const uint8_t *secret, const uint8_t *bp);
+#include "curve25519-donna/curve25519.h"
 
 static char *hex_encode(const uint8_t *buf, size_t len);
 
@@ -31,17 +31,15 @@ int main(void) {
 
   fprintf(stderr, "Going...\n");
 
-  unsigned char d[32];
+  curve25519_key d;
   arc4random_buf(&d, 32);
-
-  static const uint8_t basepoint[32] = {9};
 
   bool match = false;
 
   while (!match) {
-    (*(__uint128_t *) &d[1])--; // HACK: Workaround curve25519_donna()'s bit masking
+    (*(__uint128_t *) &d[1])--; // HACK: Workaround clamping of lower & upper bits
 
-    curve25519_donna(&gpg_packet[23], d, basepoint);
+    curve25519_donna_basepoint(&gpg_packet[22], d);
 
 #pragma clang diagnostic push 
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -51,8 +49,7 @@ int main(void) {
     match = (fingerprint[16] == 0x0B) && (fingerprint[17] == 0xAD) && (fingerprint[18] == 0xBE) && (fingerprint[19] == 0xEF);
   }
 
-  d[0] &= 248; d[31] &= 127; d[31] |= 64; // Bitmask
-
+  d[0] &= 248; d[31] &= 127; d[31] |= 64;
   fprintf(stderr, "%s\n", hex_encode(d, sizeof(d)));
   fprintf(stderr, "%s\n", hex_encode(gpg_packet, sizeof(gpg_packet)));
   fprintf(stderr, "%s\n", hex_encode(fingerprint, sizeof(fingerprint)));
