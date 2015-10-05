@@ -39,7 +39,7 @@ int main(void) {
   while (!match) {
     (*(__uint128_t *) &d[1])--; // HACK: Workaround clamping of lower & upper bits
 
-    curve25519_donna_basepoint(&gpg_packet[22], d);
+    curve25519_donna_basepoint(&gpg_packet[23], d);
 
 #pragma clang diagnostic push 
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
