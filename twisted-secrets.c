@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include <openssl/bn.h>
 #include <openssl/sha.h>
 
 #include "curve25519-donna/curve25519.h"
@@ -10,7 +12,7 @@
 static char *hex_encode(const uint8_t *buf, size_t len);
 
 int main(void) {
-  unsigned char gpg_packet[59] = {
+  unsigned char gpg_packet[96] = {
     0x99, // "the octet 0x99"
     0x00, 0x38, // "the two-octet packet length"
     0x04, // "A one-octet version number (4)"
@@ -49,10 +51,35 @@ int main(void) {
     match = (fingerprint[16] == 0x0B) && (fingerprint[17] == 0xAD) && (fingerprint[18] == 0xBE) && (fingerprint[19] == 0xEF);
   }
 
+  gpg_packet[1] = 0x94; // secret key packet tag
+
+  gpg_packet[2] = 0x5D; // "one-octet Body Length header"
+
   d[0] &= 248; d[31] &= 127; d[31] |= 64;
   fprintf(stderr, "%s\n", hex_encode(d, sizeof(d)));
   fprintf(stderr, "%s\n", hex_encode(gpg_packet, sizeof(gpg_packet)));
   fprintf(stderr, "%s\n", hex_encode(fingerprint, sizeof(fingerprint)));
+
+  gpg_packet[59] = 0x00; // "One octet indicating string-to-key usage conventions"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  unsigned short bits = BN_num_bits(BN_bin2bn(d, 32, NULL));
+#pragma clang diagnostic pop
+
+  // "a two-octet scalar that is the length of the MPI in bits"
+  gpg_packet[60] = (unsigned char)(bits >> 8) & 0xff;
+  gpg_packet[61] = (unsigned char)(bits) & 0xff;
+
+  memcpy(&gpg_packet[62], d, 32); // "an integer representing the secret key, which is a scalar of the public EC point"
+
+  // a two-octet checksum of the plaintext of the algorithm-specific portion
+  unsigned short checksum = 0;
+  for (int i = 0; i < 34; i++) { checksum += gpg_packet[60+i]; }
+  gpg_packet[94] = (unsigned char)(checksum >> 8) & 0xff;
+  gpg_packet[95] = (unsigned char)(checksum) & 0xff;
+
+  fwrite(&gpg_packet[1], sizeof(unsigned char), 95, stdout);
 
   return 0;
 }
