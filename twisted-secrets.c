@@ -9,6 +9,7 @@
 
 #include "curve25519-donna/curve25519.h"
 
+static void swap_bytes(unsigned char *buf, size_t len);
 static char *hex_encode(const uint8_t *buf, size_t len);
 
 int main(void) {
@@ -62,6 +63,8 @@ int main(void) {
 
   gpg_packet[59] = 0x00; // "One octet indicating string-to-key usage conventions"
 
+  swap_bytes(d, 32);
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   unsigned short bits = BN_num_bits(BN_bin2bn(d, 32, NULL));
@@ -82,6 +85,18 @@ int main(void) {
   fwrite(&gpg_packet[1], sizeof(unsigned char), 95, stdout);
 
   return 0;
+}
+
+static void swap_bytes(unsigned char *buf, size_t len) {
+  unsigned char *lo = buf;
+  unsigned char *hi = buf + len - 1;
+  unsigned char swap;
+
+  while (lo < hi) {
+    swap = *lo;
+    *lo++ = *hi;
+    *hi-- = swap;
+  }
 }
 
 static char * hex_encode(const uint8_t *buf, size_t len) {
