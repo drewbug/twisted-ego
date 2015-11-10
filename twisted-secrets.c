@@ -52,7 +52,7 @@ int main(void) {
     match = (fingerprint[16] == 0x0B) && (fingerprint[17] == 0xAD) && (fingerprint[18] == 0xBE) && (fingerprint[19] == 0xEF);
   }
 
-  gpg_packet[1] = 0x94; // secret key packet tag
+  gpg_packet[1] = 0x9c; // secret sub key packet tag
 
   gpg_packet[2] = 0x5D; // "one-octet Body Length header"
 
